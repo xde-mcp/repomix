@@ -1,8 +1,18 @@
 # Konfiguration
 
-Repomix kann über eine Konfigurationsdatei (`repomix.config.json`) oder Kommandozeilenoptionen konfiguriert werden. Die Konfigurationsdatei ermöglicht es Ihnen, die Verarbeitung und Ausgabe Ihres Codes anzupassen.
+Repomix kann über eine Konfigurationsdatei oder Kommandozeilenoptionen konfiguriert werden. Die Konfigurationsdatei ermöglicht es Ihnen, die Verarbeitung und Ausgabe Ihres Codes anzupassen.
 
-## Schnellstart
+## Konfigurationsdateiformate
+
+Repomix unterstützt mehrere Konfigurationsdateiformate für Flexibilität und Benutzerfreundlichkeit.
+
+Repomix sucht automatisch nach Konfigurationsdateien in der folgenden Prioritätsreihenfolge:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### JSON-Konfiguration
 
 Erstellen Sie eine Konfigurationsdatei in Ihrem Projektverzeichnis:
 ```bash
@@ -14,6 +24,62 @@ Dies erstellt eine `repomix.config.json`-Datei mit Standardeinstellungen. Sie k�
 ```bash
 repomix --init --global
 ```
+
+### TypeScript-Konfiguration
+
+TypeScript-Konfigurationsdateien bieten die beste Entwicklererfahrung mit vollständiger Typüberprüfung und IDE-Unterstützung.
+
+**Installation:**
+
+Um TypeScript- oder JavaScript-Konfiguration mit `defineConfig` zu verwenden, müssen Sie Repomix als Entwicklungsabhängigkeit installieren:
+
+```bash
+npm install -D repomix
+```
+
+**Beispiel:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Vorteile:**
+- ✅ Vollständige TypeScript-Typüberprüfung in Ihrer IDE
+- ✅ Hervorragende IDE-Autovervollständigung und IntelliSense
+- ✅ Verwendung dynamischer Werte (Zeitstempel, Umgebungsvariablen usw.)
+
+**Beispiel für dynamische Werte:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Zeitstempel-basierten Dateinamen generieren
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript-Konfiguration
+
+JavaScript-Konfigurationsdateien funktionieren genauso wie TypeScript und unterstützen `defineConfig` und dynamische Werte.
 
 ## Konfigurationsoptionen
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | Ob die Ausgabe zusätzlich zum Speichern in die Zwischenablage kopiert werden soll                                        | `false`                |
 | `output.topFilesLength`          | Anzahl der in der Zusammenfassung anzuzeigenden Top-Dateien. Bei 0 wird keine Zusammenfassung angezeigt                  | `5`                    |
 | `output.includeEmptyDirectories` | Ob leere Verzeichnisse in der Repository-Struktur enthalten sein sollen                                                   | `false`                |
+| `output.includeFullDirectoryStructure` | Bei Verwendung von `include`-Mustern, ob der vollständige Verzeichnisbaum (unter Beachtung von Ignorier-Mustern) angezeigt werden soll, während nur die inkludierten Dateien verarbeitet werden. Bietet vollständigen Repository-Kontext für die KI-Analyse | `false`                |
 | `output.git.sortByChanges`       | Ob Dateien nach Git-Änderungen sortiert werden sollen. Häufiger geänderte Dateien erscheinen am Ende                     | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Maximale Anzahl zu analysierender Commits für Git-Änderungen. Begrenzt die Historien-Tiefe für bessere Performance   | `100`                  |
 | `output.git.includeDiffs`        | Ob Git-Unterschiede in der Ausgabe enthalten sein sollen. Zeigt Arbeitsverzeichnis- und Stage-Änderungen separat an     | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | Anzahl der Git-Log-Commits, die in die Ausgabe einbezogen werden sollen                                                   | `50`                   |
 | `include`                        | Zu einschließende Dateimuster (verwendet [glob-Muster](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)) | `[]`                   |
 | `ignore.useGitignore`            | Ob Muster aus der `.gitignore`-Datei des Projekts verwendet werden sollen                                                 | `true`                 |
+| `ignore.useDotIgnore`            | Ob Muster aus der `.ignore`-Datei des Projekts verwendet werden sollen                                                    | `true`                 |
 | `ignore.useDefaultPatterns`      | Ob Standard-Ignorier-Muster (node_modules, .git etc.) verwendet werden sollen                                             | `true`                 |
 | `ignore.customPatterns`          | Zusätzliche Ignorier-Muster (verwendet [glob-Muster](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)) | `[]`                   |
 | `security.enableSecurityCheck`   | Ob Secretlint verwendet werden soll, um Sicherheitsprüfungen auf sensible Informationen durchzuführen                    | `true`                 |
@@ -126,21 +194,61 @@ Hier ist ein Beispiel einer vollständigen Konfigurationsdatei (`repomix.config.
 ## Speicherorte der Konfigurationsdatei
 
 Repomix sucht in folgender Reihenfolge nach Konfigurationsdateien:
-1. Lokale Konfigurationsdatei (`repomix.config.json`) im aktuellen Verzeichnis
-2. Globale Konfigurationsdatei:
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. Lokale Konfigurationsdatei im aktuellen Verzeichnis (Priorität: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. Globale Konfigurationsdatei (Priorität: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 Kommandozeilenoptionen haben Vorrang vor Einstellungen in der Konfigurationsdatei.
 
+## Include-Muster
+
+Repomix unterstützt die Angabe einzuschließender Dateien mittels [Glob-Mustern](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax). Dies ermöglicht eine flexiblere und leistungsfähigere Dateiauswahl:
+
+- Verwenden Sie `**/*.js`, um alle JavaScript-Dateien in jedem Verzeichnis einzuschließen
+- Verwenden Sie `src/**/*`, um alle Dateien innerhalb des `src`-Verzeichnisses und seiner Unterverzeichnisse einzuschließen
+- Kombinieren Sie mehrere Muster wie `["src/**/*.js", "**/*.md"]`, um JavaScript-Dateien in `src` und alle Markdown-Dateien einzuschließen
+
+Sie können Include-Muster in Ihrer Konfigurationsdatei angeben:
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+Oder verwenden Sie die Kommandozeilenoption `--include` für einmaliges Filtern.
+
 ## Ignorier-Muster
 
-Repomix bietet mehrere Möglichkeiten, zu ignorierende Dateien anzugeben. Die Muster werden in folgender Prioritätsreihenfolge verarbeitet:
+Repomix bietet mehrere Methoden zum Festlegen von Ignorier-Mustern, um bestimmte Dateien oder Verzeichnisse während des Packprozesses auszuschließen:
 
-1. CLI-Optionen (`--ignore`)
-2. `.repomixignore`-Datei im Projektverzeichnis
-3. `.gitignore` und `.git/info/exclude` (wenn `ignore.useGitignore` true ist)
-4. Standardmuster (wenn `ignore.useDefaultPatterns` true ist)
+- **.gitignore**: Standardmäßig werden die in den `.gitignore`-Dateien und `.git/info/exclude` Ihres Projekts aufgelisteten Muster verwendet. Dieses Verhalten kann über die Einstellung `ignore.useGitignore` oder die CLI-Option `--no-gitignore` gesteuert werden.
+- **.ignore**: Sie können eine `.ignore`-Datei im Stammverzeichnis Ihres Projekts verwenden, die dem gleichen Format wie `.gitignore` folgt. Diese Datei wird von Tools wie ripgrep und the silver searcher respektiert und reduziert die Notwendigkeit, mehrere Ignorier-Dateien zu pflegen. Dieses Verhalten kann über die Einstellung `ignore.useDotIgnore` oder die CLI-Option `--no-dot-ignore` gesteuert werden.
+- **Standardmuster**: Repomix enthält eine Standardliste häufig ausgeschlossener Dateien und Verzeichnisse (z.B. node_modules, .git, Binärdateien). Diese Funktion kann über die Einstellung `ignore.useDefaultPatterns` oder die CLI-Option `--no-default-patterns` gesteuert werden. Weitere Details finden Sie in [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts).
+- **.repomixignore**: Sie können eine `.repomixignore`-Datei in Ihrem Projektstamm erstellen, um Repomix-spezifische Ignorier-Muster zu definieren. Diese Datei folgt dem gleichen Format wie `.gitignore`.
+- **Benutzerdefinierte Muster**: Zusätzliche Ignorier-Muster können über die Option `ignore.customPatterns` in der Konfigurationsdatei angegeben werden. Sie können diese Einstellung mit der Kommandozeilenoption `-i, --ignore` überschreiben.
+
+**Prioritätsreihenfolge** (von höchster zu niedrigster):
+
+1. Benutzerdefinierte Muster (`ignore.customPatterns`)
+2. Ignorier-Dateien (`.repomixignore`, `.ignore`, `.gitignore` und `.git/info/exclude`):
+   - Bei verschachtelten Verzeichnissen haben Dateien in tieferen Verzeichnissen höhere Priorität
+   - Bei Dateien im selben Verzeichnis werden diese ohne bestimmte Reihenfolge zusammengeführt
+3. Standardmuster (wenn `ignore.useDefaultPatterns` true ist und `--no-default-patterns` nicht verwendet wird)
+
+Dieser Ansatz ermöglicht eine flexible Konfiguration des Dateiausschlusses basierend auf den Anforderungen Ihres Projekts. Er hilft, die Größe der generierten Packdatei zu optimieren, indem er den Ausschluss sicherheitssensibler Dateien und großer Binärdateien gewährleistet und gleichzeitig die Preisgabe vertraulicher Informationen verhindert.
+
+**Hinweis:** Binärdateien werden standardmäßig nicht in der gepackten Ausgabe enthalten, aber ihre Pfade werden im Abschnitt "Repository-Struktur" der Ausgabedatei aufgelistet. Dies bietet einen vollständigen Überblick über die Repository-Struktur und hält gleichzeitig die gepackte Datei effizient und textbasiert. Weitere Details finden Sie unter [Binärdateiverarbeitung](#binärdateiverarbeitung).
 
 Beispiel für `.repomixignore`:
 ```text
@@ -167,6 +275,36 @@ dist/**
 ```
 
 Die vollständige Liste finden Sie in [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)
+
+## Binärdateiverarbeitung
+
+Binärdateien (wie Bilder, PDFs, kompilierte Binärdateien, Archive usw.) werden speziell behandelt, um eine effiziente, textbasierte Ausgabe zu gewährleisten:
+
+- **Dateiinhalte**: Binärdateien werden **nicht** in die gepackte Ausgabe aufgenommen, um die Datei textbasiert und effizient für die KI-Verarbeitung zu halten
+- **Verzeichnisstruktur**: Binärdateipfade werden im Abschnitt der Verzeichnisstruktur **aufgelistet**, um einen vollständigen Überblick über Ihr Repository zu bieten
+
+Dieser Ansatz stellt sicher, dass Sie eine vollständige Ansicht Ihrer Repository-Struktur erhalten und gleichzeitig eine effiziente, textbasierte Ausgabe beibehalten, die für den KI-Konsum optimiert ist.
+
+**Beispiel:**
+
+Wenn Ihr Repository `logo.png` und `app.jar` enthält:
+- Sie erscheinen im Abschnitt Verzeichnisstruktur
+- Ihre Inhalte werden nicht im Abschnitt Dateien enthalten sein
+
+**Verzeichnisstruktur-Ausgabe:**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+Auf diese Weise können KI-Tools verstehen, dass diese Binärdateien in Ihrer Projektstruktur existieren, ohne deren Binärinhalte zu verarbeiten.
+
+**Hinweis:** Sie können den Schwellenwert für die maximale Dateigröße über die Konfigurationsoption `input.maxFileSize` steuern (Standard: 50MB). Dateien, die größer als dieser Grenzwert sind, werden vollständig übersprungen.
 
 ## Erweiterte Funktionen
 

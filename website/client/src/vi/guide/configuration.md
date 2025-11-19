@@ -1,8 +1,18 @@
 # Cấu hình
 
-Repomix có thể được cấu hình bằng file cấu hình (`repomix.config.json`) hoặc các tùy chọn dòng lệnh. File cấu hình cho phép bạn tùy chỉnh các khía cạnh khác nhau về cách xử lý và xuất ra codebase của bạn.
+Repomix có thể được cấu hình bằng file cấu hình hoặc các tùy chọn dòng lệnh. File cấu hình cho phép bạn tùy chỉnh các khía cạnh khác nhau về cách xử lý và xuất ra codebase của bạn.
 
-## Bắt đầu nhanh
+## Các định dạng file cấu hình
+
+Repomix hỗ trợ nhiều định dạng file cấu hình để mang lại sự linh hoạt và dễ sử dụng.
+
+Repomix sẽ tự động tìm kiếm các file cấu hình theo thứ tự ưu tiên sau:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### Cấu hình JSON
 
 Tạo file cấu hình trong thư mục dự án của bạn:
 ```bash
@@ -14,6 +24,62 @@ repomix --init
 ```bash
 repomix --init --global
 ```
+
+### Cấu hình TypeScript
+
+File cấu hình TypeScript cung cấp trải nghiệm developer tốt nhất với kiểm tra kiểu đầy đủ và hỗ trợ IDE.
+
+**Cài đặt:**
+
+Để sử dụng cấu hình TypeScript hoặc JavaScript với `defineConfig`, bạn cần cài đặt Repomix như một dev dependency:
+
+```bash
+npm install -D repomix
+```
+
+**Ví dụ:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Lợi ích:**
+- ✅ Kiểm tra kiểu TypeScript đầy đủ trong IDE của bạn
+- ✅ Autocomplete và IntelliSense tuyệt vời trong IDE
+- ✅ Sử dụng các giá trị động (timestamps, biến môi trường, v.v.)
+
+**Ví dụ về giá trị động:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Tạo tên file dựa trên timestamp
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### Cấu hình JavaScript
+
+File cấu hình JavaScript hoạt động tương tự như TypeScript, hỗ trợ `defineConfig` và các giá trị động.
 
 ## Các tùy chọn cấu hình
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | Có nên sao chép đầu ra vào clipboard hệ thống ngoài việc lưu file hay không                                                | `false`                |
 | `output.topFilesLength`          | Số file hàng đầu để hiển thị trong tóm tắt. Nếu đặt thành 0, sẽ không hiển thị tóm tắt                                     | `5`                    |
 | `output.includeEmptyDirectories` | Có nên bao gồm các thư mục trống trong cấu trúc repository hay không                                                       | `false`                |
+| `output.includeFullDirectoryStructure` | Khi sử dụng mẫu `include`, có nên hiển thị cây thư mục hoàn chỉnh (tuân theo mẫu ignore) trong khi vẫn chỉ xử lý các file được bao gồm hay không. Cung cấp ngữ cảnh repository đầy đủ cho phân tích AI | `false`                |
 | `output.git.sortByChanges`       | Có nên sắp xếp file theo số lượng thay đổi git hay không. Các file có nhiều thay đổi hơn xuất hiện ở cuối                 | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Số lượng commit tối đa để phân tích khi đếm các thay đổi git. Giới hạn độ sâu lịch sử để cải thiện hiệu suất         | `100`                  |
 | `output.git.includeDiffs`        | Có nên bao gồm các sự khác biệt git trong đầu ra hay không. Hiển thị riêng biệt các thay đổi work tree và staged         | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | Số lượng commit git logs để bao gồm trong đầu ra                                                                          | `50`                   |
 | `include`                        | Các mẫu file để bao gồm sử dụng [mẫu glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)         | `[]`                   |
 | `ignore.useGitignore`            | Có nên sử dụng các mẫu từ file `.gitignore` của dự án hay không                                                            | `true`                 |
+| `ignore.useDotIgnore`            | Có nên sử dụng các mẫu từ file `.ignore` của dự án hay không                                                               | `true`                 |
 | `ignore.useDefaultPatterns`      | Có nên sử dụng các mẫu ignore mặc định (node_modules, .git, v.v.) hay không                                               | `true`                 |
 | `ignore.customPatterns`          | Các mẫu bổ sung để ignore sử dụng [mẫu glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)       | `[]`                   |
 | `security.enableSecurityCheck`   | Có nên thực hiện kiểm tra bảo mật bằng Secretlint để phát hiện thông tin nhạy cảm hay không                                | `true`                 |
@@ -126,21 +194,39 @@ Bạn có thể bật xác thực schema cho file cấu hình của mình bằng
 ## Vị trí File Cấu hình
 
 Repomix tìm kiếm file cấu hình theo thứ tự sau:
-1. File cấu hình cục bộ (`repomix.config.json`) trong thư mục hiện tại
-2. File cấu hình toàn cục:
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. File cấu hình cục bộ trong thư mục hiện tại (thứ tự ưu tiên: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. File cấu hình toàn cục (thứ tự ưu tiên: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 Các tùy chọn dòng lệnh có ưu tiên cao hơn cài đặt file cấu hình.
 
 ## Mẫu Ignore
 
-Repomix cung cấp nhiều cách để chỉ định file nào nên được ignore. Các mẫu được xử lý theo thứ tự ưu tiên sau:
+Repomix cung cấp nhiều cách để chỉ định file nào nên được ignore:
 
-1. Tùy chọn CLI (`--ignore`)
-2. File `.repomixignore` trong thư mục dự án
-3. `.gitignore` và `.git/info/exclude` (nếu `ignore.useGitignore` là true)
-4. Mẫu mặc định (nếu `ignore.useDefaultPatterns` là true)
+- **.gitignore**: Theo mặc định, các mẫu được liệt kê trong file `.gitignore` và `.git/info/exclude` của dự án được sử dụng. Hành vi này có thể được kiểm soát bằng cài đặt `ignore.useGitignore` hoặc tùy chọn CLI `--no-gitignore`.
+- **.ignore**: Bạn có thể sử dụng file `.ignore` trong thư mục gốc dự án, theo cùng định dạng với `.gitignore`. File này được các công cụ như ripgrep và the silver searcher sử dụng, giảm nhu cầu duy trì nhiều file ignore. Hành vi này có thể được kiểm soát bằng cài đặt `ignore.useDotIgnore` hoặc tùy chọn CLI `--no-dot-ignore`.
+- **Mẫu mặc định**: Repomix bao gồm danh sách mặc định các file và thư mục thường được loại trừ (ví dụ: node_modules, .git, file nhị phân). Tính năng này có thể được kiểm soát bằng cài đặt `ignore.useDefaultPatterns` hoặc tùy chọn CLI `--no-default-patterns`. Vui lòng xem [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts) để biết thêm chi tiết.
+- **.repomixignore**: Bạn có thể tạo file `.repomixignore` trong thư mục gốc dự án để định nghĩa các mẫu ignore cụ thể cho Repomix. File này tuân theo cùng định dạng với `.gitignore`.
+- **Mẫu tùy chỉnh**: Các mẫu ignore bổ sung có thể được chỉ định bằng tùy chọn `ignore.customPatterns` trong file cấu hình. Bạn có thể ghi đè cài đặt này bằng tùy chọn dòng lệnh `-i, --ignore`.
+
+**Thứ tự ưu tiên** (từ cao đến thấp):
+
+1. Mẫu tùy chỉnh (`ignore.customPatterns`)
+2. File ignore (`.repomixignore`, `.ignore`, `.gitignore`, và `.git/info/exclude`):
+   - Khi trong các thư mục lồng nhau, file ở thư mục sâu hơn có ưu tiên cao hơn
+   - Khi trong cùng thư mục, các file này được hợp nhất không theo thứ tự cụ thể
+3. Mẫu mặc định (nếu `ignore.useDefaultPatterns` là true và không sử dụng `--no-default-patterns`)
 
 Ví dụ về `.repomixignore`:
 ```text

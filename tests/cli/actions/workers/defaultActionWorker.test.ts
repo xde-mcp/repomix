@@ -51,6 +51,7 @@ describe('defaultActionWorker', () => {
       truncateBase64: false,
       copyToClipboard: false,
       includeEmptyDirectories: false,
+      includeFullDirectoryStructure: false,
       tokenCountTree: false,
       git: {
         sortByChanges: true,
@@ -63,6 +64,7 @@ describe('defaultActionWorker', () => {
     include: ['**/*'],
     ignore: {
       useGitignore: true,
+      useDotIgnore: true,
       useDefaultPatterns: true,
       customPatterns: [],
     },

@@ -23,6 +23,7 @@ const createMockConfig = (overrides: Partial<RepomixConfigMerged> = {}): Repomix
     truncateBase64: false,
     copyToClipboard: false,
     includeEmptyDirectories: false,
+    includeFullDirectoryStructure: false,
     tokenCountTree: false,
     git: {
       sortByChanges: false,
@@ -35,6 +36,7 @@ const createMockConfig = (overrides: Partial<RepomixConfigMerged> = {}): Repomix
   include: [],
   ignore: {
     useGitignore: true,
+    useDotIgnore: true,
     useDefaultPatterns: true,
     customPatterns: [],
   },

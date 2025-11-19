@@ -1,8 +1,18 @@
 # Configuration
 
-Repomix can be configured using a configuration file (`repomix.config.json`) or command-line options. The configuration file allows you to customize various aspects of how Repomix processes and outputs your codebase.
+Repomix can be configured using a configuration file or command-line options. The configuration file allows you to customize various aspects of how Repomix processes and outputs your codebase.
 
-## Quick Start
+## Configuration File Formats
+
+Repomix supports multiple configuration file formats for flexibility and ease of use.
+
+Repomix will automatically search for configuration files in the following priority order:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### JSON Configuration
 
 Create a configuration file in your project directory:
 ```bash
@@ -14,6 +24,62 @@ This will create a `repomix.config.json` file with default settings. You can als
 ```bash
 repomix --init --global
 ```
+
+### TypeScript Configuration
+
+TypeScript configuration files provide the best developer experience with full type checking and IDE support.
+
+**Installation:**
+
+To use TypeScript or JavaScript configuration with `defineConfig`, you need to install Repomix as a dev dependency:
+
+```bash
+npm install -D repomix
+```
+
+**Example:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Benefits:**
+- ✅ Full TypeScript type checking in your IDE
+- ✅ Excellent IDE autocomplete and IntelliSense
+- ✅ Use dynamic values (timestamps, environment variables, etc.)
+
+**Dynamic Values Example:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Generate timestamp-based filename
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript Configuration
+
+JavaScript configuration files work the same as TypeScript, supporting `defineConfig` and dynamic values.
 
 ## Configuration Options
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | Whether to copy the output to system clipboard in addition to saving the file                                                | `false`                |
 | `output.topFilesLength`          | Number of top files to display in the summary. If set to 0, no summary will be displayed                                     | `5`                    |
 | `output.includeEmptyDirectories` | Whether to include empty directories in the repository structure                                                             | `false`                |
+| `output.includeFullDirectoryStructure` | When using `include` patterns, whether to display the complete directory tree (respecting ignore patterns) while still processing only the included files. Provides full repository context for AI analysis | `false`                |
 | `output.git.sortByChanges`       | Whether to sort files by git change count. Files with more changes appear at the bottom                                      | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Maximum number of commits to analyze for git changes. Limits the history depth for performance                           | `100`                  |
 | `output.git.includeDiffs`        | Whether to include git diffs in the output. Shows both work tree and staged changes separately                               | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | Number of git log commits to include in the output                                                                          | `50`                   |
 | `include`                        | Patterns of files to include using [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)    | `[]`                   |
 | `ignore.useGitignore`            | Whether to use patterns from the project's `.gitignore` file                                                                 | `true`                 |
+| `ignore.useDotIgnore`            | Whether to use patterns from the project's `.ignore` file                                                                    | `true`                 |
 | `ignore.useDefaultPatterns`      | Whether to use default ignore patterns (node_modules, .git, etc.)                                                           | `true`                 |
 | `ignore.customPatterns`          | Additional patterns to ignore using [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)   | `[]`                   |
 | `security.enableSecurityCheck`   | Whether to perform security checks using Secretlint to detect sensitive information                                          | `true`                 |
@@ -126,21 +194,61 @@ Here's an example of a complete configuration file (`repomix.config.json`):
 ## Configuration File Locations
 
 Repomix looks for configuration files in the following order:
-1. Local configuration file (`repomix.config.json`) in the current directory
-2. Global configuration file:
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. Local configuration file in the current directory (priority order: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. Global configuration file (priority order: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 Command-line options take precedence over configuration file settings.
 
+## Include Patterns
+
+Repomix supports specifying files to include using [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax). This allows for more flexible and powerful file selection:
+
+- Use `**/*.js` to include all JavaScript files in any directory
+- Use `src/**/*` to include all files within the `src` directory and its subdirectories
+- Combine multiple patterns like `["src/**/*.js", "**/*.md"]` to include JavaScript files in `src` and all Markdown files
+
+You can specify include patterns in your configuration file:
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+Or use the `--include` command-line option for one-time filtering.
+
 ## Ignore Patterns
 
-Repomix provides multiple ways to specify which files should be ignored. The patterns are processed in the following priority order:
+Repomix offers multiple methods to set ignore patterns for excluding specific files or directories during the packing process:
 
-1. CLI options (`--ignore`)
-2. `.repomixignore` file in the project directory
-3. `.gitignore` and `.git/info/exclude` (if `ignore.useGitignore` is true)
-4. Default patterns (if `ignore.useDefaultPatterns` is true)
+- **.gitignore**: By default, patterns listed in your project's `.gitignore` files and `.git/info/exclude` are used. This behavior can be controlled with the `ignore.useGitignore` setting or the `--no-gitignore` CLI option.
+- **.ignore**: You can use a `.ignore` file in your project root, following the same format as `.gitignore`. This file is respected by tools like ripgrep and the silver searcher, reducing the need to maintain multiple ignore files. This behavior can be controlled with the `ignore.useDotIgnore` setting or the `--no-dot-ignore` CLI option.
+- **Default patterns**: Repomix includes a default list of commonly excluded files and directories (e.g., node_modules, .git, binary files). This feature can be controlled with the `ignore.useDefaultPatterns` setting or the `--no-default-patterns` CLI option. Please see [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts) for more details.
+- **.repomixignore**: You can create a `.repomixignore` file in your project root to define Repomix-specific ignore patterns. This file follows the same format as `.gitignore`.
+- **Custom patterns**: Additional ignore patterns can be specified using the `ignore.customPatterns` option in the configuration file. You can overwrite this setting with the `-i, --ignore` command line option.
+
+**Priority Order** (from highest to lowest):
+
+1. Custom patterns (`ignore.customPatterns`)
+2. Ignore files (`.repomixignore`, `.ignore`, `.gitignore`, and `.git/info/exclude`):
+   - When in nested directories, files in deeper directories have higher priority
+   - When in the same directory, these files are merged in no particular order
+3. Default patterns (if `ignore.useDefaultPatterns` is true and `--no-default-patterns` is not used)
+
+This approach allows for flexible file exclusion configuration based on your project's needs. It helps optimize the size of the generated pack file by ensuring the exclusion of security-sensitive files and large binary files, while preventing the leakage of confidential information.
+
+**Note:** Binary files are not included in the packed output by default, but their paths are listed in the "Repository Structure" section of the output file. This provides a complete overview of the repository structure while keeping the packed file efficient and text-based. See [Binary Files Handling](#binary-files-handling) for more details.
 
 Example of `.repomixignore`:
 ```text
@@ -167,6 +275,36 @@ dist/**
 ```
 
 For the complete list, see [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)
+
+## Binary Files Handling
+
+Binary files (such as images, PDFs, compiled binaries, archives, etc.) are handled specially to maintain an efficient, text-based output:
+
+- **File Contents**: Binary files are **not included** in the packed output to keep the file text-based and efficient for AI processing
+- **Directory Structure**: Binary file **paths are listed** in the directory structure section, providing a complete overview of your repository
+
+This approach ensures you get a complete view of your repository structure while maintaining an efficient, text-based output optimized for AI consumption.
+
+**Example:**
+
+If your repository contains `logo.png` and `app.jar`:
+- They will appear in the Directory Structure section
+- Their contents will not be included in the Files section
+
+**Directory Structure Output:**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+This way, AI tools can understand that these binary files exist in your project structure without processing their binary contents.
+
+**Note:** You can control the maximum file size threshold using the `input.maxFileSize` configuration option (default: 50MB). Files larger than this limit will be skipped entirely.
 
 ## Advanced Features
 

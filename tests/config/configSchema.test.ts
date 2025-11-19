@@ -113,6 +113,7 @@ describe('configSchema', () => {
           showLineNumbers: false,
           truncateBase64: true,
           copyToClipboard: true,
+          includeFullDirectoryStructure: false,
           tokenCountTree: '100',
           git: {
             sortByChanges: true,
@@ -125,6 +126,7 @@ describe('configSchema', () => {
         include: [],
         ignore: {
           useGitignore: true,
+          useDotIgnore: true,
           useDefaultPatterns: true,
           customPatterns: [],
         },
@@ -139,8 +141,13 @@ describe('configSchema', () => {
     });
 
     it('should reject incomplete config', () => {
-      const validConfig = {};
-      expect(() => repomixConfigDefaultSchema.parse(validConfig)).not.toThrow();
+      const invalidConfig = {};
+      expect(() => repomixConfigDefaultSchema.parse(invalidConfig)).toThrow();
+    });
+
+    it('should provide helpful error for missing required fields', () => {
+      const invalidConfig = {};
+      expect(() => repomixConfigDefaultSchema.parse(invalidConfig)).toThrow(/expected object/i);
     });
   });
 
@@ -211,6 +218,7 @@ describe('configSchema', () => {
           showLineNumbers: true,
           truncateBase64: true,
           copyToClipboard: false,
+          includeFullDirectoryStructure: false,
           tokenCountTree: false,
           git: {
             sortByChanges: true,
@@ -223,6 +231,7 @@ describe('configSchema', () => {
         include: ['**/*.js', '**/*.ts'],
         ignore: {
           useGitignore: true,
+          useDotIgnore: true,
           useDefaultPatterns: true,
           customPatterns: ['*.log'],
         },

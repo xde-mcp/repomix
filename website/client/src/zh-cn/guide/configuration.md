@@ -1,8 +1,18 @@
 # 配置
 
-Repomix可以通过配置文件（`repomix.config.json`）或命令行选项进行配置。配置文件允许您自定义代码库的处理和输出方式。
+Repomix可以通过配置文件或命令行选项进行配置。配置文件允许您自定义代码库的处理和输出方式。
 
-## 快速开始
+## 配置文件格式
+
+Repomix支持多种配置文件格式，以提供灵活性和易用性。
+
+Repomix将按以下优先级自动搜索配置文件：
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### JSON配置
 
 在项目目录中创建配置文件：
 ```bash
@@ -14,6 +24,62 @@ repomix --init
 ```bash
 repomix --init --global
 ```
+
+### TypeScript配置
+
+TypeScript配置文件提供最佳的开发体验，具有完整的类型检查和IDE支持。
+
+**安装：**
+
+要使用带有`defineConfig`的TypeScript或JavaScript配置，您需要将Repomix安装为开发依赖：
+
+```bash
+npm install -D repomix
+```
+
+**示例：**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**优势：**
+- ✅ IDE中的完整TypeScript类型检查
+- ✅ 出色的IDE自动完成和IntelliSense
+- ✅ 使用动态值（时间戳、环境变量等）
+
+**动态值示例：**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// 生成基于时间戳的文件名
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript配置
+
+JavaScript配置文件的工作方式与TypeScript相同，支持`defineConfig`和动态值。
 
 ## 配置选项
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | 是否除了保存文件外还将输出复制到系统剪贴板                                                                                 | `false`                |
 | `output.topFilesLength`          | 在摘要中显示的顶部文件数量。如果设置为0，则不显示摘要                                                                      | `5`                    |
 | `output.includeEmptyDirectories` | 是否在仓库结构中包含空目录                                                                                                 | `false`                |
+| `output.includeFullDirectoryStructure` | 使用`include`模式时，是否显示完整的目录树（遵守ignore模式）同时仅处理包含的文件。为AI分析提供完整的仓库上下文 | `false`                |
 | `output.git.sortByChanges`       | 是否按Git更改次数对文件进行排序。更改较多的文件显示在底部                                                                 | `true`                 |
 | `output.git.sortByChangesMaxCommits` | 分析Git更改时要分析的最大提交数。限制历史深度以提高性能                                                               | `100`                  |
 | `output.git.includeDiffs`        | 是否在输出中包含Git差异。分别显示工作树和暂存区的更改                                                                     | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | 要包含的Git日志提交数量。限制历史深度以了解开发模式                                                                      | `50`                   |
 | `include`                        | 要包含的文件模式（使用[glob模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)）                 | `[]`                   |
 | `ignore.useGitignore`            | 是否使用项目的`.gitignore`文件中的模式                                                                                     | `true`                 |
+| `ignore.useDotIgnore`            | 是否使用项目的`.ignore`文件中的模式                                                                                        | `true`                 |
 | `ignore.useDefaultPatterns`      | 是否使用默认忽略模式（node_modules、.git等）                                                                              | `true`                 |
 | `ignore.customPatterns`          | 额外的忽略模式（使用[glob模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)）                   | `[]`                   |
 | `security.enableSecurityCheck`   | 是否使用Secretlint执行安全检查以检测敏感信息                                                                              | `true`                 |
@@ -126,21 +194,61 @@ repomix --init --global
 ## 配置文件位置
 
 Repomix按以下顺序查找配置文件：
-1. 当前目录中的本地配置文件（`repomix.config.json`）
-2. 全局配置文件：
-   - Windows：`%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux：`~/.config/repomix/repomix.config.json`
+1. 当前目录中的本地配置文件（优先级：TS > JS > JSON）
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. 全局配置文件（优先级：TS > JS > JSON）
+   - Windows：
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux：
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 命令行选项优先于配置文件设置。
 
+## 包含模式
+
+Repomix支持使用[glob模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)指定要包含的文件。这允许更灵活和强大的文件选择：
+
+- 使用`**/*.js`包含任何目录中的所有JavaScript文件
+- 使用`src/**/*`包含`src`目录及其子目录中的所有文件
+- 组合多个模式，如`["src/**/*.js", "**/*.md"]`以包含`src`中的JavaScript文件和所有Markdown文件
+
+您可以在配置文件中指定包含模式：
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+或使用`--include`命令行选项进行一次性过滤。
+
 ## 忽略模式
 
-Repomix提供多种方式来指定要忽略的文件。模式按以下优先顺序处理：
+Repomix提供多种方法来设置忽略模式，以在打包过程中排除特定文件或目录：
 
-1. CLI选项（`--ignore`）
-2. 项目目录中的`.repomixignore`文件
-3. `.gitignore`和`.git/info/exclude`（如果`ignore.useGitignore`为true）
-4. 默认模式（如果`ignore.useDefaultPatterns`为true）
+- **.gitignore**：默认情况下，使用项目的`.gitignore`文件和`.git/info/exclude`中列出的模式。此行为可以通过`ignore.useGitignore`设置或`--no-gitignore` CLI选项控制。
+- **.ignore**：您可以在项目根目录中使用`.ignore`文件，遵循与`.gitignore`相同的格式。ripgrep和the silver searcher等工具也会遵守此文件，减少了维护多个忽略文件的需要。此行为可以通过`ignore.useDotIgnore`设置或`--no-dot-ignore` CLI选项控制。
+- **默认模式**：Repomix包含常见排除文件和目录的默认列表（例如node_modules、.git、二进制文件）。此功能可以通过`ignore.useDefaultPatterns`设置或`--no-default-patterns` CLI选项控制。有关详细信息，请参阅[defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)。
+- **.repomixignore**：您可以在项目根目录中创建`.repomixignore`文件来定义Repomix特定的忽略模式。此文件遵循与`.gitignore`相同的格式。
+- **自定义模式**：可以使用配置文件中的`ignore.customPatterns`选项指定其他忽略模式。您可以使用`-i, --ignore`命令行选项覆盖此设置。
+
+**优先顺序**（从高到低）：
+
+1. 自定义模式（`ignore.customPatterns`）
+2. 忽略文件（`.repomixignore`、`.ignore`、`.gitignore`和`.git/info/exclude`）：
+   - 在嵌套目录中时，更深层目录中的文件具有更高优先级
+   - 在同一目录中时，这些文件以不特定的顺序合并
+3. 默认模式（如果`ignore.useDefaultPatterns`为true且未使用`--no-default-patterns`）
+
+这种方法允许根据项目需求灵活配置文件排除。它通过确保排除安全敏感文件和大型二进制文件来帮助优化生成的打包文件的大小，同时防止机密信息泄漏。
+
+**注意：**默认情况下，二进制文件不包含在打包输出中，但它们的路径列在输出文件的"仓库结构"部分。这提供了仓库结构的完整概述，同时保持打包文件高效且基于文本。有关详细信息，请参阅[二进制文件处理](#二进制文件处理)。
 
 `.repomixignore`示例：
 ```text
@@ -167,6 +275,36 @@ dist/**
 ```
 
 完整列表请参见[defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)
+
+## 二进制文件处理
+
+二进制文件（如图像、PDF、编译的二进制文件、归档文件等）经过特殊处理以保持高效的基于文本的输出：
+
+- **文件内容**：二进制文件**不包含**在打包输出中，以保持文件基于文本且对AI处理高效
+- **目录结构**：二进制文件**路径被列出**在目录结构部分，提供仓库的完整概述
+
+这种方法确保您获得仓库结构的完整视图，同时保持针对AI消费优化的高效的基于文本的输出。
+
+**示例：**
+
+如果您的仓库包含`logo.png`和`app.jar`：
+- 它们将出现在目录结构部分
+- 它们的内容将不会包含在文件部分
+
+**目录结构输出：**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+这样，AI工具可以理解这些二进制文件存在于您的项目结构中，而无需处理其二进制内容。
+
+**注意：**您可以使用`input.maxFileSize`配置选项（默认值：50MB）控制最大文件大小阈值。大于此限制的文件将被完全跳过。
 
 ## 高级功能
 

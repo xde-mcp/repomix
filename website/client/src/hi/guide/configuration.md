@@ -1,8 +1,18 @@
 # कॉन्फिगरेशन
 
-Repomix को कॉन्फिगरेशन फ़ाइल (`repomix.config.json`) या कमांड-लाइन विकल्पों का उपयोग करके कॉन्फिगर किया जा सकता है। कॉन्फिगरेशन फ़ाइल आपको अपने कोडबेस के प्रसंस्करण और आउटपुट के विभिन्न पहलुओं को अनुकूलित करने की अनुमति देती है।
+Repomix को कॉन्फिगरेशन फ़ाइल या कमांड-लाइन विकल्पों का उपयोग करके कॉन्फिगर किया जा सकता है। कॉन्फिगरेशन फ़ाइल आपको अपने कोडबेस के प्रसंस्करण और आउटपुट के विभिन्न पहलुओं को अनुकूलित करने की अनुमति देती है।
 
-## तुरंत शुरुआत
+## कॉन्फिगरेशन फ़ाइल प्रारूप
+
+Repomix लचीलेपन और उपयोग में आसानी के लिए कई कॉन्फिगरेशन फ़ाइल प्रारूपों का समर्थन करता है।
+
+Repomix स्वचालित रूप से निम्नलिखित प्राथमिकता क्रम में कॉन्फिगरेशन फ़ाइलों को खोजेगा:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### JSON कॉन्फिगरेशन
 
 अपनी प्रोजेक्ट डायरेक्टरी में एक कॉन्फिगरेशन फ़ाइल बनाएं:
 ```bash
@@ -14,6 +24,62 @@ repomix --init
 ```bash
 repomix --init --global
 ```
+
+### TypeScript कॉन्फिगरेशन
+
+TypeScript कॉन्फिगरेशन फ़ाइलें पूर्ण टाइप चेकिंग और IDE समर्थन के साथ सर्वोत्तम developer अनुभव प्रदान करती हैं।
+
+**इंस्टॉलेशन:**
+
+TypeScript या JavaScript कॉन्फिगरेशन को `defineConfig` के साथ उपयोग करने के लिए, आपको Repomix को dev dependency के रूप में इंस्टॉल करना होगा:
+
+```bash
+npm install -D repomix
+```
+
+**उदाहरण:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**लाभ:**
+- ✅ आपके IDE में पूर्ण TypeScript टाइप चेकिंग
+- ✅ उत्कृष्ट IDE autocomplete और IntelliSense
+- ✅ गतिशील मान का उपयोग करें (timestamps, environment variables, आदि)
+
+**गतिशील मान उदाहरण:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Timestamp-आधारित फ़ाइल नाम generate करें
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript कॉन्फिगरेशन
+
+JavaScript कॉन्फिगरेशन फ़ाइलें TypeScript की तरह ही काम करती हैं, `defineConfig` और गतिशील मानों का समर्थन करती हैं।
 
 ## कॉन्फिगरेशन विकल्प
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | फ़ाइल सेव करने के अतिरिक्त आउटपुट को सिस्टम क्लिपबोर्ड पर कॉपी करना है या नहीं                                           | `false`                |
 | `output.topFilesLength`          | सारांश में दिखाने के लिए शीर्ष फ़ाइलों की संख्या। 0 पर सेट करने से कोई सारांश प्रदर्शित नहीं होगा                           | `5`                    |
 | `output.includeEmptyDirectories` | रिपॉजिटरी संरचना में खाली डायरेक्टरियां शामिल करनी हैं या नहीं                                                            | `false`                |
+| `output.includeFullDirectoryStructure` | `include` पैटर्न का उपयोग करते समय, केवल शामिल फ़ाइलों को प्रोसेस करते हुए, पूर्ण डायरेक्टरी ट्री (ignore पैटर्न का सम्मान करते हुए) प्रदर्शित करना है या नहीं। AI विश्लेषण के लिए पूर्ण रिपॉजिटरी संदर्भ प्रदान करता है | `false`                |
 | `output.git.sortByChanges`       | Git परिवर्तन संख्या के अनुसार फ़ाइलों को सॉर्ट करना है या नहीं। अधिक परिवर्तन वाली फ़ाइलें नीचे दिखाई देती हैं                | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Git परिवर्तनों का विश्लेषण करने के लिए अधिकतम कमिट संख्या। प्रदर्शन के लिए इतिहास गहराई को सीमित करता है             | `100`                  |
 | `output.git.includeDiffs`        | आउटपुट में Git अंतर शामिल करना है या नहीं। वर्क ट्री और स्टेज्ड परिवर्तनों को अलग-अलग दिखाता है                         | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | आउटपुट में शामिल करने के लिए git log कमिट की संख्या                                                                     | `50`                   |
 | `include`                        | शामिल करने के लिए फ़ाइल पैटर्न [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax) का उपयोग करके | `[]`                   |
 | `ignore.useGitignore`            | प्रोजेक्ट की `.gitignore` फ़ाइल के पैटर्न का उपयोग करना है या नहीं                                                         | `true`                 |
+| `ignore.useDotIgnore`            | प्रोजेक्ट की `.ignore` फ़ाइल के पैटर्न का उपयोग करना है या नहीं                                                           | `true`                 |
 | `ignore.useDefaultPatterns`      | डिफ़ॉल्ट ignore पैटर्न (node_modules, .git, आदि) का उपयोग करना है या नहीं                                               | `true`                 |
 | `ignore.customPatterns`          | अतिरिक्त ignore पैटर्न [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax) का उपयोग करके | `[]`                   |
 | `security.enableSecurityCheck`   | संवेदनशील जानकारी का पता लगाने के लिए Secretlint का उपयोग करके सुरक्षा जांच करनी है या नहीं                               | `true`                 |
@@ -126,21 +194,39 @@ repomix --init --global
 ## कॉन्फिगरेशन फ़ाइल स्थान
 
 Repomix निम्नलिखित क्रम में कॉन्फिगरेशन फ़ाइलों की तलाश करता है:
-1. वर्तमान डायरेक्टरी में स्थानीय कॉन्फिगरेशन फ़ाइल (`repomix.config.json`)
-2. ग्लोबल कॉन्फिगरेशन फ़ाइल:
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. वर्तमान डायरेक्टरी में स्थानीय कॉन्फिगरेशन फ़ाइल (प्राथमिकता क्रम: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. ग्लोबल कॉन्फिगरेशन फ़ाइल (प्राथमिकता क्रम: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 कमांड-लाइन विकल्प कॉन्फिगरेशन फ़ाइल सेटिंग्स से प्राथमिकता रखते हैं।
 
 ## Ignore पैटर्न
 
-Repomix कई तरीके प्रदान करता है जिससे आप निर्दिष्ट कर सकते हैं कि कौन सी फ़ाइलों को ignore करना है। पैटर्न निम्नलिखित प्राथमिकता क्रम में प्रोसेस किए जाते हैं:
+Repomix कई तरीके प्रदान करता है जिससे आप निर्दिष्ट कर सकते हैं कि कौन सी फ़ाइलों को ignore करना है:
 
-1. CLI विकल्प (`--ignore`)
-2. प्रोजेक्ट डायरेक्टरी में `.repomixignore` फ़ाइल
-3. `.gitignore` और `.git/info/exclude` (यदि `ignore.useGitignore` true है)
-4. डिफ़ॉल्ट पैटर्न (यदि `ignore.useDefaultPatterns` true है)
+- **.gitignore**: डिफ़ॉल्ट रूप से, प्रोजेक्ट की `.gitignore` फ़ाइल और `.git/info/exclude` में सूचीबद्ध पैटर्न का उपयोग किया जाता है। इस व्यवहार को `ignore.useGitignore` सेटिंग या `--no-gitignore` CLI विकल्प के साथ नियंत्रित किया जा सकता है।
+- **.ignore**: आप अपने प्रोजेक्ट रूट में `.ignore` फ़ाइल का उपयोग कर सकते हैं, जो `.gitignore` के समान प्रारूप का पालन करती है। यह फ़ाइल ripgrep और the silver searcher जैसे उपकरणों द्वारा उपयोग की जाती है, जिससे कई ignore फ़ाइलों को बनाए रखने की आवश्यकता कम हो जाती है। इस व्यवहार को `ignore.useDotIgnore` सेटिंग या `--no-dot-ignore` CLI विकल्प के साथ नियंत्रित किया जा सकता है।
+- **डिफ़ॉल्ट पैटर्न**: Repomix में आमतौर पर बाहर की गई फ़ाइलों और डायरेक्टरीज़ की एक डिफ़ॉल्ट सूची शामिल है (जैसे node_modules, .git, बाइनरी फ़ाइलें)। इस सुविधा को `ignore.useDefaultPatterns` सेटिंग या `--no-default-patterns` CLI विकल्प के साथ नियंत्रित किया जा सकता है। अधिक विवरण के लिए कृपया [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts) देखें।
+- **.repomixignore**: आप Repomix-विशिष्ट ignore पैटर्न को परिभाषित करने के लिए अपने प्रोजेक्ट रूट में `.repomixignore` फ़ाइल बना सकते हैं। यह फ़ाइल `.gitignore` के समान प्रारूप का पालन करती है।
+- **कस्टम पैटर्न**: अतिरिक्त ignore पैटर्न को कॉन्फिगरेशन फ़ाइल में `ignore.customPatterns` विकल्प का उपयोग करके निर्दिष्ट किया जा सकता है। आप इस सेटिंग को `-i, --ignore` कमांड लाइन विकल्प के साथ ओवरराइट कर सकते हैं।
+
+**प्राथमिकता क्रम** (उच्च से निम्न):
+
+1. कस्टम पैटर्न (`ignore.customPatterns`)
+2. Ignore फ़ाइलें (`.repomixignore`, `.ignore`, `.gitignore`, और `.git/info/exclude`):
+   - जब नेस्टेड डायरेक्टरीज़ में हों, तो गहरी डायरेक्टरीज़ में फ़ाइलें अधिक प्राथमिकता रखती हैं
+   - जब समान डायरेक्टरी में हों, तो ये फ़ाइलें बिना किसी विशेष क्रम के मर्ज की जाती हैं
+3. डिफ़ॉल्ट पैटर्न (यदि `ignore.useDefaultPatterns` true है और `--no-default-patterns` उपयोग नहीं किया गया है)
 
 `.repomixignore` का उदाहरण:
 ```text

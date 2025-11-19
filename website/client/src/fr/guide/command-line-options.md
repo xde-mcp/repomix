@@ -27,6 +27,7 @@
 - `--header-text <text>`: Texte personnalisé à inclure dans l'en-tête du fichier
 - `--instruction-file-path <path>`: Chemin vers un fichier contenant des instructions personnalisées détaillées
 - `--include-empty-directories`: Inclure les répertoires vides dans la sortie
+- `--include-full-directory-structure`: Afficher l'arborescence complète du dépôt dans la section Structure de répertoire, même lors de l'utilisation de motifs --include
 - `--include-diffs`: Inclure les diffs git dans la sortie (inclut les modifications de l'arbre de travail et les modifications indexées séparément)
 - `--include-logs`: Inclure les journaux git dans la sortie (inclut l'historique des commits avec les dates, les messages et les chemins de fichiers)
 - `--include-logs-count <count>`: Nombre de commits de journaux git à inclure (par défaut : 50)
@@ -36,6 +37,7 @@
 - `--include <patterns>`: Liste des motifs d'inclusion (séparés par des virgules)
 - `-i, --ignore <patterns>`: Motifs d'ignorance supplémentaires (séparés par des virgules)
 - `--no-gitignore`: Désactiver l'utilisation du fichier .gitignore
+- `--no-dot-ignore`: Désactiver l'utilisation du fichier .ignore
 - `--no-default-patterns`: Désactiver les motifs par défaut
 
 ## Options de dépôt distant

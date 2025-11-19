@@ -83,7 +83,7 @@ This wouldn't have been possible without all of you using and supporting Repomix
 - **Token Counting**: Provides token counts for each file and the entire repository, useful for LLM context limits.
 - **Simple to Use**: You need just one command to pack your entire repository.
 - **Customizable**: Easily configure what to include or exclude.
-- **Git-Aware**: Automatically respects your `.gitignore` files and `.git/info/exclude`.
+- **Git-Aware**: Automatically respects your `.gitignore`, `.ignore`, and `.repomixignore` files.
 - **Security-Focused**: Incorporates [Secretlint](https://github.com/secretlint/secretlint) for robust security checks to detect and prevent inclusion of sensitive information.
 - **Code Compression**: The `--compress` option uses [Tree-sitter](https://github.com/tree-sitter/tree-sitter) to extract key code elements, reducing token count while preserving structure.
 
@@ -495,7 +495,7 @@ The JSON format structures the content as a hierarchical JSON object with camelC
     "purpose": "This file contains a packed representation of the entire repository's contents...",
     "fileFormat": "The content is organized as follows...",
     "usageGuidelines": "- This file should be treated as read-only...",
-    "notes": "- Some files may have been excluded based on .gitignore rules..."
+    "notes": "- Some files may have been excluded based on .gitignore, .ignore, and .repomixignore rules..."
   },
   "userProvidedHeader": "Custom header text if specified",
   "directoryStructure": "src/\n  cli/\n    cliOutput.ts\n    index.ts\n  config/\n    configLoader.ts",
@@ -627,6 +627,7 @@ Instruction
 - `--header-text <text>`: Custom text to include at the beginning of the output
 - `--instruction-file-path <path>`: Path to file containing custom instructions to include in output
 - `--include-empty-directories`: Include folders with no files in directory structure
+- `--include-full-directory-structure`: Show complete directory tree in output, including files not matched by --include patterns
 - `--no-git-sort-by-changes`: Don't sort files by git change frequency (default: most changed files first)
 - `--include-diffs`: Add git diff section showing working tree and staged changes
 - `--include-logs`: Add git commit history with messages and changed files
@@ -636,6 +637,7 @@ Instruction
 - `--include <patterns>`: Include only files matching these glob patterns (comma-separated, e.g., "src/**/*.js,*.md")
 - `-i, --ignore <patterns>`: Additional patterns to exclude (comma-separated, e.g., "*.test.js,docs/**")
 - `--no-gitignore`: Don't use .gitignore rules for filtering files
+- `--no-dot-ignore`: Don't use .ignore rules for filtering files
 - `--no-default-patterns`: Don't apply built-in ignore patterns (node_modules, .git, build dirs, etc.)
 
 #### Remote Repository Options
@@ -898,6 +900,8 @@ To configure Repomix as an MCP server in [Claude Code](https://docs.anthropic.co
 claude mcp add repomix -- npx -y repomix --mcp
 ```
 
+Alternatively, you can use the official Repomix plugins (see [Claude Code Plugins](#claude-code-plugins) section below).
+
 **Using Docker instead of npx:**
 
 You can use Docker as an alternative to npx for running Repomix as an MCP server:
@@ -930,7 +934,7 @@ When running as an MCP server, Repomix provides the following tools:
     - `directory`: Absolute path to the directory to pack
     - `compress`: (Optional, default: false) Enable Tree-sitter compression to extract essential code signatures and structure while removing implementation details. Reduces token usage by ~70% while preserving semantic meaning. Generally not needed since grep_repomix_output allows incremental content retrieval. Use only when you specifically need the entire codebase content for large repositories.
     - `includePatterns`: (Optional) Specify files to include using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**"). Only matching files will be processed.
-    - `ignorePatterns`: (Optional) Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js", "node_modules/**,dist/**"). These patterns supplement .gitignore and built-in exclusions.
+    - `ignorePatterns`: (Optional) Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js", "node_modules/**,dist/**"). These patterns supplement .gitignore, .ignore, and built-in exclusions.
     - `topFilesLength`: (Optional, default: 10) Number of largest files by size to display in the metrics summary for codebase analysis.
 
 2. **attach_packed_output**: Attach an existing Repomix packed output file for AI analysis
@@ -948,7 +952,7 @@ When running as an MCP server, Repomix provides the following tools:
     - `remote`: GitHub repository URL or user/repo format (e.g., "yamadashy/repomix", "https://github.com/user/repo", or "https://github.com/user/repo/tree/branch")
     - `compress`: (Optional, default: false) Enable Tree-sitter compression to extract essential code signatures and structure while removing implementation details. Reduces token usage by ~70% while preserving semantic meaning. Generally not needed since grep_repomix_output allows incremental content retrieval. Use only when you specifically need the entire codebase content for large repositories.
     - `includePatterns`: (Optional) Specify files to include using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "**/*.{js,ts}", "src/**,docs/**"). Only matching files will be processed.
-    - `ignorePatterns`: (Optional) Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js", "node_modules/**,dist/**"). These patterns supplement .gitignore and built-in exclusions.
+    - `ignorePatterns`: (Optional) Specify additional files to exclude using fast-glob patterns. Multiple patterns can be comma-separated (e.g., "test/**,*.spec.js", "node_modules/**,dist/**"). These patterns supplement .gitignore, .ignore, and built-in exclusions.
     - `topFilesLength`: (Optional, default: 10) Number of largest files by size to display in the metrics summary for codebase analysis.
 
 4. **read_repomix_output**: Read the contents of a Repomix-generated output file. Supports partial reading with line range specification for large files.
@@ -993,13 +997,187 @@ When running as an MCP server, Repomix provides the following tools:
     - Validates paths and ensures they are absolute
     - Useful for exploring project structure and understanding codebase organization
 
+### Claude Code Plugins
+
+Repomix provides official plugins for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) that integrate seamlessly with the AI-powered development environment.
+
+#### Available Plugins
+
+**1. repomix-mcp** (MCP Server Plugin)
+
+Foundation plugin that provides AI-powered codebase analysis through MCP server integration.
+
+**Features:**
+- Pack local and remote repositories
+- Search through packed outputs
+- Read files with built-in security scanning (Secretlint)
+- Automatic Tree-sitter compression (~70% token reduction)
+
+**2. repomix-commands** (Slash Commands Plugin)
+
+Provides convenient slash commands for quick operations with natural language support.
+
+**Available Commands:**
+- `/repomix-commands:pack-local` - Pack local codebase with various options
+- `/repomix-commands:pack-remote` - Pack and analyze remote GitHub repositories
+
+**Example usage:**
+```text
+/repomix-commands:pack-local
+Pack this project as markdown with compression
+
+/repomix-commands:pack-remote yamadashy/repomix
+Pack only TypeScript files from the yamadashy/repomix repository
+```
+
+**3. repomix-explorer:explorer** (AI Analysis Agent Plugin)
+
+AI-powered repository analysis agent that intelligently explores codebases using Repomix CLI.
+
+**Features:**
+- Natural language codebase exploration and analysis
+- Intelligent pattern discovery and code structure understanding
+- Incremental analysis using grep and targeted file reading
+- Automatic context management for large repositories
+
+**Available Commands:**
+- `/repomix-explorer:explore-local` - Analyze local codebase with AI assistance
+- `/repomix-explorer:explore-remote` - Analyze remote GitHub repositories with AI assistance
+
+**Example usage:**
+```text
+/repomix-explorer:explore-local ./src
+Find all authentication-related code
+
+/repomix-explorer:explore-remote facebook/react
+Show me the main component architecture
+```
+
+The agent automatically:
+1. Runs `npx repomix@latest` to pack the repository
+2. Uses Grep and Read tools to efficiently search the output
+3. Provides comprehensive analysis without consuming excessive context
+
+#### Installation
+
+**1. Add the Repomix plugin marketplace:**
+
+```text
+/plugin marketplace add yamadashy/repomix
+```
+
+**2. Install plugins:**
+
+```text
+# Install MCP server plugin (recommended foundation)
+/plugin install repomix-mcp@repomix
+
+# Install commands plugin (extends functionality)
+/plugin install repomix-commands@repomix
+
+# Install repository explorer plugin (AI-powered analysis)
+/plugin install repomix-explorer@repomix
+```
+
+**Note**: The `repomix-mcp` plugin is recommended as a foundation. The `repomix-commands` plugin provides convenient slash commands, while `repomix-explorer` adds AI-powered analysis capabilities. While you can install them independently, using all three provides the most comprehensive experience.
+
+**Alternatively, use the interactive plugin installer:**
+
+```bash
+/plugin
+```
+
+This will open an interactive interface where you can browse and install available plugins.
+
+#### Benefits
+
+- **Seamless Integration**: Claude can directly analyze codebases without manual preparation
+- **Natural Language**: Use conversational commands instead of remembering CLI syntax
+- **Always Latest**: Automatically uses `npx repomix@latest` for up-to-date features
+- **Security Built-in**: Automatic Secretlint scanning prevents sensitive data exposure
+- **Token Optimization**: Tree-sitter compression for large codebases
+
+For more details, see the plugin documentation in the `.claude/plugins/` directory.
+
 ## ⚙️ Configuration
 
-Create a `repomix.config.json` file in your project root for custom configurations.
+Repomix supports multiple configuration file formats for flexibility and ease of use.
+
+### Configuration File Formats
+
+Repomix will automatically search for configuration files in the following priority order:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+#### JSON Configuration
+
+Create a `repomix.config.json` file in your project root:
 
 ```bash
 repomix --init
 ```
+
+This will create a `repomix.config.json` file with default settings.
+
+#### TypeScript Configuration
+
+TypeScript configuration files provide the best developer experience with full type checking and IDE support.
+
+**Installation:**
+
+To use TypeScript or JavaScript configuration with `defineConfig`, you need to install Repomix as a dev dependency:
+
+```bash
+npm install -D repomix
+```
+
+**Example:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Benefits:**
+- ✅ Full TypeScript type checking in your IDE
+- ✅ Excellent IDE autocomplete and IntelliSense
+- ✅ Use dynamic values (timestamps, environment variables, etc.)
+
+**Dynamic Values Example:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Generate timestamp-based filename
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+#### JavaScript Configuration
+
+JavaScript configuration files work the same as TypeScript, supporting `defineConfig` and dynamic values.
+
+### Configuration Options
 
 Here's an explanation of the configuration options:
 
@@ -1023,6 +1201,7 @@ Here's an explanation of the configuration options:
 | `output.topFilesLength`          | Number of top files to display in the summary. If set to 0, no summary will be displayed                                     | `5`                    |
 | `output.tokenCountTree`          | Whether to display file tree with token count summaries. Can be boolean or number (minimum token count threshold)           | `false`                |
 | `output.includeEmptyDirectories` | Whether to include empty directories in the repository structure                                                             | `false`                |
+| `output.includeFullDirectoryStructure` | When using `include` patterns, whether to display the complete directory tree (respecting ignore patterns) while still processing only the included files. Provides full repository context for AI analysis | `false`                |
 | `output.git.sortByChanges`       | Whether to sort files by git change count (files with more changes appear at the bottom)                                     | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Maximum number of commits to analyze for git changes                                                                     | `100`                  |
 | `output.git.includeDiffs`       | Whether to include git diffs in the output (includes both work tree and staged changes separately)                          | `false`                |
@@ -1030,6 +1209,7 @@ Here's an explanation of the configuration options:
 | `output.git.includeLogsCount`   | Number of git log commits to include                                                                                         | `50`                   |
 | `include`                        | Patterns of files to include (using [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax))  | `[]`                   |
 | `ignore.useGitignore`            | Whether to use patterns from the project's `.gitignore` file                                                                 | `true`                 |
+| `ignore.useDotIgnore`            | Whether to use patterns from the project's `.ignore` file                                                                    | `true`                 |
 | `ignore.useDefaultPatterns`      | Whether to use default ignore patterns                                                                                       | `true`                 |
 | `ignore.customPatterns`          | Additional patterns to ignore (using [glob patterns](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)) | `[]`                   |
 | `security.enableSecurityCheck`   | Whether to perform security checks on files                                                                                  | `true`                 |
@@ -1041,10 +1221,29 @@ The configuration file supports [JSON5](https://json5.org/) syntax, which allows
 - Unquoted property names
 - More relaxed string syntax
 
+### Schema Validation
+
+You can enable schema validation for your configuration file by adding the `$schema` property:
+
+```json
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml"
+  }
+}
+```
+
+This provides auto-completion and validation in editors that support JSON schema.
+
+### Example Configuration
+
 Example configuration:
 
 ```json5
 {
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
   "input": {
     "maxFileSize": 50000000
   },
@@ -1126,6 +1325,7 @@ Repomix offers multiple methods to set ignore patterns for excluding specific fi
 process:
 
 - **.gitignore**: By default, patterns listed in your project's `.gitignore` files and `.git/info/exclude` are used. This behavior can be controlled with the `ignore.useGitignore` setting or the `--no-gitignore` cli option.
+- **.ignore**: You can use a `.ignore` file in your project root, following the same format as `.gitignore`. This file is respected by tools like ripgrep and the silver searcher, reducing the need to maintain multiple ignore files. This behavior can be controlled with the `ignore.useDotIgnore` setting or the `--no-dot-ignore` cli option.
 - **Default patterns**: Repomix includes a default list of commonly excluded files and directories (e.g., node_modules,
   .git, binary files). This feature can be controlled with the `ignore.useDefaultPatterns` setting or the `--no-default-patterns` cli option. Please
   see [defaultIgnore.ts](src/config/defaultIgnore.ts) for more details.
@@ -1136,10 +1336,11 @@ process:
 
 Priority Order (from highest to lowest):
 
-1. Custom patterns `ignore.customPatterns`
-2. `.repomixignore`
-3. `.gitignore` and `.git/info/exclude` (if `ignore.useGitignore` is true and `--no-gitignore` is not used)
-4. Default patterns (if `ignore.useDefaultPatterns` is true and `--no-default-patterns` is not used)
+1. Custom patterns (`ignore.customPatterns`)
+2. Ignore files (`.repomixignore`, `.ignore`, `.gitignore`, and `.git/info/exclude`):
+   - When in nested directories, files in deeper directories have higher priority
+   - When in the same directory, these files are merged in no particular order
+3. Default patterns (if `ignore.useDefaultPatterns` is true and `--no-default-patterns` is not used)
 
 This approach allows for flexible file exclusion configuration based on your project's needs. It helps optimize the size
 of the generated pack file by ensuring the exclusion of security-sensitive files and large binary files, while

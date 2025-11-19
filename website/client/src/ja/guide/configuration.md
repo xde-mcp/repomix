@@ -1,8 +1,18 @@
 # 設定
 
-Repomixは設定ファイル（`repomix.config.json`）またはコマンドラインオプションを使用して設定できます。設定ファイルを使用することで、コードベースの処理と出力方法をカスタマイズできます。
+Repomixは設定ファイルまたはコマンドラインオプションを使用して設定できます。設定ファイルを使用することで、コードベースの処理と出力方法をカスタマイズできます。
 
-## クイックスタート
+## 設定ファイルの形式
+
+Repomixは柔軟性と使いやすさのために、複数の設定ファイル形式をサポートしています。
+
+Repomixは以下の優先順位で設定ファイルを自動的に検索します：
+
+1. **TypeScript** (`repomix.config.ts`、`repomix.config.mts`、`repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`、`repomix.config.mjs`、`repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`、`repomix.config.jsonc`、`repomix.config.json`)
+
+### JSON設定
 
 プロジェクトディレクトリに設定ファイルを作成します：
 ```bash
@@ -14,6 +24,62 @@ repomix --init
 ```bash
 repomix --init --global
 ```
+
+### TypeScript設定
+
+TypeScript設定ファイルは、完全な型チェックとIDEサポートにより、最高の開発者体験を提供します。
+
+**インストール:**
+
+`defineConfig`を使用してTypeScriptまたはJavaScript設定を使用するには、Repomixをdev dependencyとしてインストールする必要があります：
+
+```bash
+npm install -D repomix
+```
+
+**例:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**利点:**
+- ✅ IDEでの完全なTypeScript型チェック
+- ✅ 優れたIDE自動補完とIntelliSense
+- ✅ 動的な値（タイムスタンプ、環境変数など）の使用
+
+**動的な値の例:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// タイムスタンプベースのファイル名を生成
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript設定
+
+JavaScript設定ファイルはTypeScriptと同様に機能し、`defineConfig`と動的な値をサポートしています。
 
 ## 設定オプション
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | ファイルの保存に加えて、出力をシステムクリップボードにコピーするかどうか                                                   | `false`                |
 | `output.topFilesLength`          | 要約に表示するトップファイルの数。0に設定すると、要約は表示されません                                                       | `5`                    |
 | `output.includeEmptyDirectories` | リポジトリ構造に空のディレクトリを含めるかどうか                                                                           | `false`                |
+| `output.includeFullDirectoryStructure` | `include`パターンを使用する際、includeされたファイルのみを処理しながら、完全なディレクトリツリー（ignoreパターンに従う）を表示するかどうか。AI分析のための完全なリポジトリコンテキストを提供します | `false`                |
 | `output.git.sortByChanges`       | Gitの変更回数でファイルをソートするかどうか。変更が多いファイルが下部に表示されます                                       | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Gitの変更を分析する最大コミット数。パフォーマンスのために履歴の深さを制限します                                       | `100`                  |
 | `output.git.includeDiffs`        | 出力にGitの差分を含めるかどうか。作業ツリーとステージング済みの変更を別々に表示します                                     | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | 含めるGitログのコミット数。開発パターンを理解するための履歴の深さを制限します                                           | `50`                   |
 | `include`                        | 含めるファイルのパターン（[globパターン](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)を使用）    | `[]`                   |
 | `ignore.useGitignore`            | プロジェクトの`.gitignore`ファイルのパターンを使用するかどうか                                                             | `true`                 |
+| `ignore.useDotIgnore`            | プロジェクトの`.ignore`ファイルのパターンを使用するかどうか                                                                | `true`                 |
 | `ignore.useDefaultPatterns`      | デフォルトの除外パターン（node_modules、.gitなど）を使用するかどうか                                                       | `true`                 |
 | `ignore.customPatterns`          | 追加の除外パターン（[globパターン](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)を使用）          | `[]`                   |
 | `security.enableSecurityCheck`   | Secretlintを使用して機密情報を検出するセキュリティチェックを実行するかどうか                                               | `true`                 |
@@ -126,21 +194,61 @@ repomix --init --global
 ## 設定ファイルの場所
 
 Repomixは以下の順序で設定ファイルを探します：
-1. カレントディレクトリのローカル設定ファイル（`repomix.config.json`）
-2. グローバル設定ファイル：
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. カレントディレクトリのローカル設定ファイル（優先順位: TS > JS > JSON）
+   - TypeScript: `repomix.config.ts`、`repomix.config.mts`、`repomix.config.cts`
+   - JavaScript: `repomix.config.js`、`repomix.config.mjs`、`repomix.config.cjs`
+   - JSON: `repomix.config.json5`、`repomix.config.jsonc`、`repomix.config.json`
+2. グローバル設定ファイル（優先順位: TS > JS > JSON）
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`、`.mts`、`.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`、`.mjs`、`.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`、`.jsonc`、`.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`、`.mts`、`.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`、`.mjs`、`.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`、`.jsonc`、`.json`
 
 コマンドラインオプションは設定ファイルの設定よりも優先されます。
 
+## インクルードパターン
+
+Repomixは[globパターン](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)を使用して含めるファイルを指定できます。これにより、より柔軟で強力なファイル選択が可能になります：
+
+- `**/*.js`を使用して、任意のディレクトリ内のすべてのJavaScriptファイルを含める
+- `src/**/*`を使用して、`src`ディレクトリとそのサブディレクトリ内のすべてのファイルを含める
+- `["src/**/*.js", "**/*.md"]`のように複数のパターンを組み合わせて、`src`内のJavaScriptファイルとすべてのMarkdownファイルを含める
+
+設定ファイルでインクルードパターンを指定できます：
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+または、一時的なフィルタリングには`--include`コマンドラインオプションを使用します。
+
 ## 除外パターン
 
-Repomixは複数の方法でファイルの除外を指定できます。パターンは以下の優先順位で処理されます：
+Repomixは、パッキングプロセス中に特定のファイルやディレクトリを除外するための複数の方法を提供します：
 
-1. CLIオプション（`--ignore`）
-2. プロジェクトディレクトリの`.repomixignore`ファイル
-3. `.gitignore`および`.git/info/exclude`（`ignore.useGitignore`がtrueの場合）
-4. デフォルトパターン（`ignore.useDefaultPatterns`がtrueの場合）
+- **.gitignore**: デフォルトでは、プロジェクトの`.gitignore`ファイルと`.git/info/exclude`にリストされているパターンが使用されます。この動作は`ignore.useGitignore`設定または`--no-gitignore` CLIオプションで制御できます。
+- **.ignore**: プロジェクトルートに`.ignore`ファイルを使用できます。`.gitignore`と同じ形式に従います。このファイルはripgrepやthe silver searcherなどのツールでも尊重されるため、複数の除外ファイルを維持する必要が減ります。この動作は`ignore.useDotIgnore`設定または`--no-dot-ignore` CLIオプションで制御できます。
+- **デフォルトパターン**: Repomixには、一般的に除外されるファイルとディレクトリのデフォルトリスト（例：node_modules、.git、バイナリファイル）が含まれています。この機能は`ignore.useDefaultPatterns`設定または`--no-default-patterns` CLIオプションで制御できます。詳細は[defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)を参照してください。
+- **.repomixignore**: プロジェクトルートに`.repomixignore`ファイルを作成して、Repomix固有の除外パターンを定義できます。このファイルは`.gitignore`と同じ形式に従います。
+- **カスタムパターン**: 設定ファイルの`ignore.customPatterns`オプションを使用して、追加の除外パターンを指定できます。この設定は`-i, --ignore`コマンドラインオプションで上書きできます。
+
+**優先順位**（高い順）：
+
+1. カスタムパターン（`ignore.customPatterns`）
+2. 除外ファイル（`.repomixignore`、`.ignore`、`.gitignore`、`.git/info/exclude`）：
+   - ネストされたディレクトリにある場合、より深いディレクトリのファイルが優先されます
+   - 同じディレクトリにある場合、これらのファイルは順不同でマージされます
+3. デフォルトパターン（`ignore.useDefaultPatterns`がtrueで`--no-default-patterns`が使用されていない場合）
+
+このアプローチにより、プロジェクトのニーズに基づいて柔軟なファイル除外設定が可能になります。セキュリティ上機密性の高いファイルや大きなバイナリファイルの除外を確実にし、機密情報の漏洩を防ぎながら、生成されるパックファイルのサイズを最適化するのに役立ちます。
+
+**注意:** バイナリファイルはデフォルトではパック出力に含まれませんが、そのパスは出力ファイルの「リポジトリ構造」セクションにリストされます。これにより、パックファイルを効率的でテキストベースに保ちながら、リポジトリ構造の完全な概要が提供されます。詳細は[バイナリファイルの処理](#バイナリファイルの処理)を参照してください。
 
 `.repomixignore`の例：
 ```text
@@ -167,6 +275,36 @@ dist/**
 ```
 
 完全なリストは[defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)を参照してください。
+
+## バイナリファイルの処理
+
+バイナリファイル（画像、PDF、コンパイル済みバイナリ、アーカイブなど）は、効率的なテキストベースの出力を維持するために特別に処理されます：
+
+- **ファイル内容**: バイナリファイルは、ファイルをテキストベースに保ち、AI処理に効率的にするために、パック出力に**含まれません**
+- **ディレクトリ構造**: バイナリファイルの**パスはリストされ**、ディレクトリ構造セクションに表示され、リポジトリの完全な概要を提供します
+
+このアプローチにより、AI向けに最適化された効率的なテキストベースの出力を維持しながら、リポジトリ構造の完全なビューを取得できます。
+
+**例：**
+
+リポジトリに`logo.png`と`app.jar`が含まれている場合：
+- ディレクトリ構造セクションに表示されます
+- その内容はファイルセクションに含まれません
+
+**ディレクトリ構造出力：**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+これにより、AIツールはこれらのバイナリファイルがプロジェクト構造に存在することを理解できますが、そのバイナリ内容は処理しません。
+
+**注意:** `input.maxFileSize`設定オプション（デフォルト：50MB）を使用して、最大ファイルサイズのしきい値を制御できます。この制限より大きいファイルは完全にスキップされます。
 
 ## 高度な機能
 

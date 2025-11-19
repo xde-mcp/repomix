@@ -41,6 +41,7 @@ describe('calculateGitLogMetrics', () => {
       truncateBase64: false,
       copyToClipboard: false,
       includeEmptyDirectories: false,
+      includeFullDirectoryStructure: false,
       tokenCountTree: false,
       git: {
         sortByChanges: true,
@@ -53,6 +54,7 @@ describe('calculateGitLogMetrics', () => {
     include: ['**/*'],
     ignore: {
       useGitignore: true,
+      useDotIgnore: true,
       useDefaultPatterns: true,
       customPatterns: [],
     },

@@ -1,8 +1,18 @@
 # Konfigurasi
 
-Repomix dapat dikonfigurasi menggunakan file konfigurasi (`repomix.config.json`) atau opsi baris perintah. File konfigurasi memungkinkan Anda untuk menyesuaikan berbagai aspek cara pemrosesan dan output codebase Anda.
+Repomix dapat dikonfigurasi menggunakan file konfigurasi atau opsi baris perintah. File konfigurasi memungkinkan Anda untuk menyesuaikan berbagai aspek cara pemrosesan dan output codebase Anda.
 
-## Memulai Cepat
+## Format File Konfigurasi
+
+Repomix mendukung beberapa format file konfigurasi untuk fleksibilitas dan kemudahan penggunaan.
+
+Repomix akan secara otomatis mencari file konfigurasi dalam urutan prioritas berikut:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### Konfigurasi JSON
 
 Buat file konfigurasi di direktori proyek Anda:
 ```bash
@@ -14,6 +24,62 @@ Ini akan membuat file `repomix.config.json` dengan pengaturan default. Anda juga
 ```bash
 repomix --init --global
 ```
+
+### Konfigurasi TypeScript
+
+File konfigurasi TypeScript memberikan pengalaman developer terbaik dengan pengecekan tipe lengkap dan dukungan IDE.
+
+**Instalasi:**
+
+Untuk menggunakan konfigurasi TypeScript atau JavaScript dengan `defineConfig`, Anda perlu menginstal Repomix sebagai dev dependency:
+
+```bash
+npm install -D repomix
+```
+
+**Contoh:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Manfaat:**
+- ✅ Pengecekan tipe TypeScript lengkap di IDE Anda
+- ✅ Autocomplete dan IntelliSense IDE yang sangat baik
+- ✅ Gunakan nilai dinamis (timestamp, environment variables, dll.)
+
+**Contoh Nilai Dinamis:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Generate nama file berbasis timestamp
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### Konfigurasi JavaScript
+
+File konfigurasi JavaScript bekerja sama seperti TypeScript, mendukung `defineConfig` dan nilai dinamis.
 
 ## Opsi Konfigurasi
 
@@ -36,6 +102,7 @@ repomix --init --global
 | `output.copyToClipboard`         | Apakah akan menyalin output ke clipboard sistem selain menyimpan file                                                       | `false`                |
 | `output.topFilesLength`          | Jumlah file teratas untuk ditampilkan dalam ringkasan. Jika diset ke 0, tidak akan ada ringkasan yang ditampilkan         | `5`                    |
 | `output.includeEmptyDirectories` | Apakah akan menyertakan direktori kosong dalam struktur repository                                                          | `false`                |
+| `output.includeFullDirectoryStructure` | Saat menggunakan pola `include`, apakah akan menampilkan pohon direktori lengkap (sesuai dengan pola ignore) sambil tetap hanya memproses file yang disertakan. Menyediakan konteks repository lengkap untuk analisis AI | `false`                |
 | `output.git.sortByChanges`       | Apakah akan mengurutkan file berdasarkan jumlah perubahan git. File dengan lebih banyak perubahan muncul di bagian bawah  | `true`                 |
 | `output.git.sortByChangesMaxCommits` | Jumlah maksimum commit untuk dianalisis saat menghitung perubahan git. Membatasi kedalaman riwayat untuk performa     | `100`                  |
 | `output.git.includeDiffs`        | Apakah akan menyertakan perbedaan git dalam output. Menampilkan perubahan work tree dan staged secara terpisah            | `false`                |
@@ -43,6 +110,7 @@ repomix --init --global
 | `output.git.includeLogsCount`    | Jumlah commit log git yang akan disertakan dalam output                                                                    | `50`                   |
 | `include`                        | Pola file untuk disertakan menggunakan [pola glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)  | `[]`                   |
 | `ignore.useGitignore`            | Apakah akan menggunakan pola dari file `.gitignore` proyek                                                                  | `true`                 |
+| `ignore.useDotIgnore`            | Apakah akan menggunakan pola dari file `.ignore` proyek                                                                     | `true`                 |
 | `ignore.useDefaultPatterns`      | Apakah akan menggunakan pola ignore default (node_modules, .git, dll.)                                                     | `true`                 |
 | `ignore.customPatterns`          | Pola tambahan untuk diabaikan menggunakan [pola glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax) | `[]`                   |
 | `security.enableSecurityCheck`   | Apakah akan melakukan pemeriksaan keamanan menggunakan Secretlint untuk mendeteksi informasi sensitif                      | `true`                 |
@@ -126,21 +194,39 @@ Berikut adalah contoh file konfigurasi lengkap (`repomix.config.json`):
 ## Lokasi File Konfigurasi
 
 Repomix mencari file konfigurasi dalam urutan berikut:
-1. File konfigurasi lokal (`repomix.config.json`) di direktori saat ini
-2. File konfigurasi global:
-   - Windows: `%LOCALAPPDATA%\Repomix\repomix.config.json`
-   - macOS/Linux: `~/.config/repomix/repomix.config.json`
+1. File konfigurasi lokal di direktori saat ini (urutan prioritas: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. File konfigurasi global (urutan prioritas: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
 
 Opsi baris perintah memiliki prioritas lebih tinggi daripada pengaturan file konfigurasi.
 
 ## Pola Ignore
 
-Repomix menyediakan beberapa cara untuk menentukan file mana yang harus diabaikan. Pola diproses dalam urutan prioritas berikut:
+Repomix menyediakan beberapa cara untuk menentukan file mana yang harus diabaikan:
 
-1. Opsi CLI (`--ignore`)
-2. File `.repomixignore` di direktori proyek
-3. `.gitignore` dan `.git/info/exclude` (jika `ignore.useGitignore` adalah true)
-4. Pola default (jika `ignore.useDefaultPatterns` adalah true)
+- **.gitignore**: Secara default, pola yang tercantum dalam file `.gitignore` dan `.git/info/exclude` proyek digunakan. Perilaku ini dapat dikontrol dengan pengaturan `ignore.useGitignore` atau opsi CLI `--no-gitignore`.
+- **.ignore**: Anda dapat menggunakan file `.ignore` di direktori root proyek, mengikuti format yang sama dengan `.gitignore`. File ini digunakan oleh alat seperti ripgrep dan the silver searcher, mengurangi kebutuhan untuk memelihara beberapa file ignore. Perilaku ini dapat dikontrol dengan pengaturan `ignore.useDotIgnore` atau opsi CLI `--no-dot-ignore`.
+- **Pola default**: Repomix menyertakan daftar default file dan direktori yang biasanya dikecualikan (misalnya node_modules, .git, file biner). Fitur ini dapat dikontrol dengan pengaturan `ignore.useDefaultPatterns` atau opsi CLI `--no-default-patterns`. Silakan lihat [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts) untuk detail lebih lanjut.
+- **.repomixignore**: Anda dapat membuat file `.repomixignore` di direktori root proyek untuk mendefinisikan pola ignore khusus Repomix. File ini mengikuti format yang sama dengan `.gitignore`.
+- **Pola kustom**: Pola ignore tambahan dapat ditentukan menggunakan opsi `ignore.customPatterns` dalam file konfigurasi. Anda dapat menimpa pengaturan ini dengan opsi baris perintah `-i, --ignore`.
+
+**Urutan prioritas** (dari tinggi ke rendah):
+
+1. Pola kustom (`ignore.customPatterns`)
+2. File ignore (`.repomixignore`, `.ignore`, `.gitignore`, dan `.git/info/exclude`):
+   - Ketika berada di direktori bersarang, file di direktori yang lebih dalam memiliki prioritas lebih tinggi
+   - Ketika berada di direktori yang sama, file-file ini digabungkan tanpa urutan tertentu
+3. Pola default (jika `ignore.useDefaultPatterns` adalah true dan tidak menggunakan `--no-default-patterns`)
 
 Contoh `.repomixignore`:
 ```text
