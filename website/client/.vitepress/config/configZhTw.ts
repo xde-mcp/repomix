@@ -42,6 +42,7 @@ export const configZhTw = defineConfig({
           items: [
             { text: 'MCP 伺服器', link: '/zh-tw/guide/mcp-server' },
             { text: 'Claude Code 外掛', link: '/zh-tw/guide/claude-code-plugins' },
+            { text: 'Agent Skills 生成', link: '/zh-tw/guide/agent-skills-generation' },
             { text: 'GitHub Actions', link: '/zh-tw/guide/github-actions' },
             { text: '作為庫使用 Repomix', link: '/zh-tw/guide/development/using-repomix-as-a-library' },
             { text: 'AI輔助開發技巧', link: '/zh-tw/guide/tips/best-practices' },
@@ -53,6 +54,7 @@ export const configZhTw = defineConfig({
             { text: '社群專案', link: '/zh-tw/guide/community-projects' },
             { text: '為Repomix做貢獻', link: '/zh-tw/guide/development/' },
             { text: '贊助商', link: '/zh-tw/guide/sponsors' },
+            { text: 'Privacy Policy', link: '/zh-tw/guide/privacy' },
           ],
         },
       ],

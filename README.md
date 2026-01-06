@@ -626,6 +626,7 @@ Instruction
 - `--truncate-base64`: Truncate long base64 data strings to reduce output size
 - `--header-text <text>`: Custom text to include at the beginning of the output
 - `--instruction-file-path <path>`: Path to file containing custom instructions to include in output
+- `--split-output <size>`: Split output into multiple numbered files (e.g., repomix-output.1.xml, repomix-output.2.xml); size like 500kb, 2mb, or 1.5mb
 - `--include-empty-directories`: Include folders with no files in directory structure
 - `--include-full-directory-structure`: Show complete directory tree in output, including files not matched by --include patterns
 - `--no-git-sort-by-changes`: Don't sort files by git change frequency (default: most changed files first)
@@ -658,6 +659,9 @@ Instruction
 #### MCP
 - `--mcp`: Run as Model Context Protocol server for AI tool integration
 
+#### Agent Skills Generation
+- `--skill-generate [name]`: Generate Claude Agent Skills format output to `.claude/skills/<name>/` directory (name auto-generated if omitted)
+
 #### Examples
 
 ```bash
@@ -678,6 +682,9 @@ repomix --compress
 
 # Process specific files
 repomix --include "src/**/*.ts" --ignore "**/*.test.ts"
+
+# Split output into multiple files (max size per part)
+repomix --split-output 20mb
 
 # Remote repository with branch
 repomix --remote https://github.com/user/repo/tree/main
@@ -833,6 +840,24 @@ This helps you:
 - **Optimize file selection** using `--include` and `--ignore` patterns  
 - **Plan compression strategies** by targeting the largest contributors
 - **Balance content vs. context** when preparing code for AI analysis
+
+### Splitting Output for Large Codebases
+
+When working with large codebases, the packed output may exceed file size limits imposed by some AI tools (e.g., Google AI Studio's 1MB limit). Use `--split-output` to automatically split the output into multiple files:
+
+```bash
+repomix --split-output 1mb
+```
+
+This generates numbered files like:
+- `repomix-output.1.xml`
+- `repomix-output.2.xml`
+- `repomix-output.3.xml`
+
+Size can be specified with units: `500kb`, `1mb`, `2mb`, `1.5mb`, etc. Decimal values are supported.
+
+> [!NOTE]
+> Files are grouped by top-level directory to maintain context. A single file or directory will never be split across multiple output files.
 
 ### MCP Server Integration
 
@@ -1001,6 +1026,37 @@ When running as an MCP server, Repomix provides the following tools:
 
 Repomix provides official plugins for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) that integrate seamlessly with the AI-powered development environment.
 
+#### Installation
+
+**1. Add the Repomix plugin marketplace:**
+
+```text
+/plugin marketplace add yamadashy/repomix
+```
+
+**2. Install plugins:**
+
+```text
+# Install MCP server plugin (recommended foundation)
+/plugin install repomix-mcp@repomix
+
+# Install commands plugin (extends functionality)
+/plugin install repomix-commands@repomix
+
+# Install repository explorer plugin (AI-powered analysis)
+/plugin install repomix-explorer@repomix
+```
+
+**Note**: The `repomix-mcp` plugin is recommended as a foundation. The `repomix-commands` plugin provides convenient slash commands, while `repomix-explorer` adds AI-powered analysis capabilities. While you can install them independently, using all three provides the most comprehensive experience.
+
+**Alternatively, use the interactive plugin installer:**
+
+```text
+/plugin
+```
+
+This will open an interactive interface where you can browse and install available plugins.
+
 #### Available Plugins
 
 **1. repomix-mcp** (MCP Server Plugin)
@@ -1030,7 +1086,7 @@ Pack this project as markdown with compression
 Pack only TypeScript files from the yamadashy/repomix repository
 ```
 
-**3. repomix-explorer:explorer** (AI Analysis Agent Plugin)
+**3. repomix-explorer** (AI Analysis Agent Plugin)
 
 AI-powered repository analysis agent that intelligently explores codebases using Repomix CLI.
 
@@ -1058,37 +1114,6 @@ The agent automatically:
 2. Uses Grep and Read tools to efficiently search the output
 3. Provides comprehensive analysis without consuming excessive context
 
-#### Installation
-
-**1. Add the Repomix plugin marketplace:**
-
-```text
-/plugin marketplace add yamadashy/repomix
-```
-
-**2. Install plugins:**
-
-```text
-# Install MCP server plugin (recommended foundation)
-/plugin install repomix-mcp@repomix
-
-# Install commands plugin (extends functionality)
-/plugin install repomix-commands@repomix
-
-# Install repository explorer plugin (AI-powered analysis)
-/plugin install repomix-explorer@repomix
-```
-
-**Note**: The `repomix-mcp` plugin is recommended as a foundation. The `repomix-commands` plugin provides convenient slash commands, while `repomix-explorer` adds AI-powered analysis capabilities. While you can install them independently, using all three provides the most comprehensive experience.
-
-**Alternatively, use the interactive plugin installer:**
-
-```bash
-/plugin
-```
-
-This will open an interactive interface where you can browse and install available plugins.
-
 #### Benefits
 
 - **Seamless Integration**: Claude can directly analyze codebases without manual preparation
@@ -1098,6 +1123,75 @@ This will open an interactive interface where you can browse and install availab
 - **Token Optimization**: Tree-sitter compression for large codebases
 
 For more details, see the plugin documentation in the `.claude/plugins/` directory.
+
+### Agent Skills Generation
+
+Repomix can generate [Claude Agent Skills](https://docs.anthropic.com/en/docs/claude-code/skills) format output, creating a structured Skills directory that can be used as a reusable codebase reference for AI assistants. This feature is particularly powerful when you want to reference implementations from remote repositories.
+
+#### Basic Usage
+
+```bash
+# Generate Skills from local directory
+repomix --skill-generate
+
+# Generate with custom Skills name
+repomix --skill-generate my-project-reference
+
+# Generate from remote repository
+repomix --remote https://github.com/user/repo --skill-generate
+```
+
+When you run the command, Repomix prompts you to choose where to save the Skills:
+
+1. **Personal Skills** (`~/.claude/skills/`) - Available across all projects on your machine
+2. **Project Skills** (`.claude/skills/`) - Shared with your team via git
+
+#### Generated Structure
+
+The Skills are generated with the following structure:
+
+```text
+.claude/skills/<skill-name>/
+├── SKILL.md                 # Main Skills metadata & documentation
+└── references/
+    ├── summary.md           # Purpose, format, and statistics
+    ├── project-structure.md # Directory tree with line counts
+    ├── files.md             # All file contents (grep-friendly)
+    └── tech-stack.md        # Languages, frameworks, dependencies
+```
+
+#### What's Included
+
+- **SKILL.md**: Contains Skills metadata, file/line/token counts, overview, and usage instructions
+- **summary.md**: Explains the Skills' purpose, usage guidelines, and provides statistics breakdown by file type and language
+- **project-structure.md**: Directory tree with line counts per file for easy file discovery
+- **files.md**: All file contents with syntax highlighting headers, optimized for grep-friendly searching
+- **tech-stack.md**: Auto-detected tech stack from dependency files (`package.json`, `requirements.txt`, `Cargo.toml`, etc.)
+
+#### Auto-Generated Skills Names
+
+If no name is provided, Repomix auto-generates one:
+
+```bash
+repomix src/ --skill-generate                # → repomix-reference-src
+repomix --remote user/repo --skill-generate  # → repomix-reference-repo
+repomix --skill-generate CustomName          # → custom-name (normalized to kebab-case)
+```
+
+#### Integration with Repomix Features
+
+Skills generation respects all standard Repomix options:
+
+```bash
+# Generate Skills with file filtering
+repomix --skill-generate --include "src/**/*.ts" --ignore "**/*.test.ts"
+
+# Generate Skills with compression
+repomix --skill-generate --compress
+
+# Generate Skills from remote repository
+repomix --remote yamadashy/repomix --skill-generate
+```
 
 ## ⚙️ Configuration
 
@@ -1198,6 +1292,7 @@ Here's an explanation of the configuration options:
 | `output.showLineNumbers`         | Whether to add line numbers to each line in the output                                                                       | `false`                |
 | `output.truncateBase64`          | Whether to truncate long base64 data strings (e.g., images) to reduce token count                                            | `false`                |
 | `output.copyToClipboard`         | Whether to copy the output to system clipboard in addition to saving the file                                                | `false`                |
+| `output.splitOutput`             | Split output into multiple numbered files by maximum size per part (e.g., `1000000` for ~1MB). Keeps each file under the limit and avoids splitting files across parts | Not set                |
 | `output.topFilesLength`          | Number of top files to display in the summary. If set to 0, no summary will be displayed                                     | `5`                    |
 | `output.tokenCountTree`          | Whether to display file tree with token count summaries. Can be boolean or number (minimum token count threshold)           | `false`                |
 | `output.includeEmptyDirectories` | Whether to include empty directories in the repository structure                                                             | `false`                |
@@ -1263,6 +1358,7 @@ Example configuration:
     "showLineNumbers": false,
     "truncateBase64": false,
     "copyToClipboard": false,
+    "splitOutput": null, // or a number like 1000000 for ~1MB per file
     "includeEmptyDirectories": false,
     "git": {
       "sortByChanges": true,
@@ -1637,6 +1733,20 @@ async function analyzeFiles(directory) {
 
 For more examples, check the source code at [website/server/src/remoteRepo.ts](https://github.com/yamadashy/repomix/blob/main/website/server/src/remoteRepo.ts) which demonstrates how repomix.com uses the library.
 
+### Bundling
+
+When bundling repomix with tools like Rolldown or esbuild, some dependencies must remain external and WASM files need to be copied:
+
+**External dependencies (cannot be bundled):**
+- `tinypool` - Spawns worker threads using file paths
+- `tiktoken` - Loads WASM files dynamically at runtime
+
+**WASM files to copy:**
+- `web-tree-sitter.wasm` → Same directory as bundled JS (required for code compression feature)
+- Tree-sitter language files → Directory specified by `REPOMIX_WASM_DIR` environment variable
+
+For a working example, see [website/server/scripts/bundle.mjs](https://github.com/yamadashy/repomix/blob/main/website/server/scripts/bundle.mjs).
+
 ## 🤝 Contribution
 
 We welcome contributions from the community! To get started, please refer to our [Contributing Guide](CONTRIBUTING.md).
@@ -1649,29 +1759,7 @@ We welcome contributions from the community! To get started, please refer to our
 
 ## 🔒 Privacy Policy
 
-### Repomix CLI Tool
-
-- **Data Collection**: The Repomix CLI tool does **not** collect, transmit, or store any user data, telemetry, or repository information.
-- **Network Usage**: Repomix CLI operates fully offline after installation. The only cases where an internet connection is needed are:
-  - Installation via npm/yarn.
-  - Using the `--remote` flag to process remote repositories.
-  - Checking for updates (manually triggered).
-- **Security Considerations**: Since all processing is local, Repomix CLI is safe to use with private and internal repositories.
-
-### Repomix Website ([repomix.com](https://repomix.com/))
-
-- **Data Collection**: The Repomix website uses **Google Analytics** to collect usage data, such as page views and user interactions. This helps us understand how the website is used and improve the user experience.
-- **File Processing**: When uploading ZIP files or folders, your files are temporarily stored on our servers for processing. All uploaded files and processed data are automatically deleted immediately after processing is complete.
-
-### Repomix Browser Extension
-
-- **Data Collection**: The Repomix browser extension does **not** collect, transmit, or store any user data, telemetry, or repository information.
-- **Permissions**: The extension only requires minimal permissions necessary to add the Repomix button to GitHub repository pages. It does not access or modify repository data.
-
-### Liability Disclaimer
-
-Repomix (the CLI tool, website, and browser extension) is provided "as is" without any warranties or guarantees.  
-We do not take responsibility for how the generated output is used, including but not limited to its accuracy, legality, or any potential consequences arising from its use.
+See our [Privacy Policy](https://repomix.com/guide/privacy).
 
 ## 📜 License
 

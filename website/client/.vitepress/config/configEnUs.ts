@@ -42,6 +42,7 @@ export const configEnUs = defineConfig({
           items: [
             { text: 'MCP Server', link: '/guide/mcp-server' },
             { text: 'Claude Code Plugins', link: '/guide/claude-code-plugins' },
+            { text: 'Agent Skills Generation', link: '/guide/agent-skills-generation' },
             { text: 'GitHub Actions', link: '/guide/github-actions' },
             { text: 'Using Repomix as a Library', link: '/guide/development/using-repomix-as-a-library' },
             { text: 'AI-Assisted Development Tips', link: '/guide/tips/best-practices' },
@@ -53,6 +54,7 @@ export const configEnUs = defineConfig({
             { text: 'Community Projects', link: '/guide/community-projects' },
             { text: 'Contributing to Repomix', link: '/guide/development/' },
             { text: 'Sponsors', link: '/guide/sponsors' },
+            { text: 'Privacy Policy', link: '/guide/privacy' },
           ],
         },
       ],
