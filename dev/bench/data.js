@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774689726679,
+  "lastUpdate": 1774691564946,
   "repoUrl": "https://github.com/xde-mcp/repomix",
   "entries": {
     "Repomix Performance": [
@@ -90,6 +90,51 @@ window.BENCHMARK_DATA = {
             "range": "±889",
             "unit": "ms",
             "extra": "Median of 10 runs\nQ1: 3545ms, Q3: 4434ms\nAll times: 3463, 3514, 3545, 3755, 3779, 4116, 4374, 4434, 4751, 5974ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "xiewuuweix@gmail.com",
+            "name": "xiewu",
+            "username": "xiewu"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a115f34899055b87184ba5b901d5da42b2e9569d",
+          "message": "Merge branch 'yamadashy:main' into main",
+          "timestamp": "2026-03-28T17:50:59+08:00",
+          "tree_id": "ecada18b88b4e34671a8adf11133c157b8ac4302",
+          "url": "https://github.com/xde-mcp/repomix/commit/a115f34899055b87184ba5b901d5da42b2e9569d"
+        },
+        "date": 1774691564648,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Repomix Pack (macOS)",
+            "value": 1531,
+            "range": "±33",
+            "unit": "ms",
+            "extra": "Median of 20 runs\nQ1: 1515ms, Q3: 1548ms\nAll times: 1449, 1482, 1491, 1509, 1510, 1515, 1517, 1518, 1519, 1522, 1531, 1532, 1539, 1543, 1545, 1548, 1562, 1666, 1701, 2101ms"
+          },
+          {
+            "name": "Repomix Pack (Linux)",
+            "value": 2832,
+            "range": "±22",
+            "unit": "ms",
+            "extra": "Median of 10 runs\nQ1: 2820ms, Q3: 2842ms\nAll times: 2815, 2818, 2820, 2827, 2828, 2832, 2835, 2842, 2852, 2858ms"
+          },
+          {
+            "name": "Repomix Pack (Windows)",
+            "value": 3394,
+            "range": "±225",
+            "unit": "ms",
+            "extra": "Median of 10 runs\nQ1: 3366ms, Q3: 3591ms\nAll times: 3348, 3354, 3366, 3383, 3392, 3394, 3473, 3591, 3598, 3632ms"
           }
         ]
       }
